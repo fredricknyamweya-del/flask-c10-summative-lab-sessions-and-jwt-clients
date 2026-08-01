@@ -22,7 +22,9 @@ jwt = JWTManager(app)
 migrate = Migrate(app, db)
 
 
+# ========================
 # AUTH ENDPOINTS
+# ========================
 
 @app.route('/auth/signup', methods=['POST'])
 def signup():
@@ -72,7 +74,7 @@ def login():
         if not user or not user.check_password(data['password']):
             return jsonify({'error': 'Invalid username or password'}), 401
         
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
         
         return jsonify({
             'message': 'Login successful',
@@ -89,7 +91,7 @@ def login():
 def get_current_user():
     """Get current authenticated user's profile."""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         
         if not user:
@@ -101,15 +103,16 @@ def get_current_user():
         return jsonify({'error': str(e)}), 500
 
 
-
+# ========================
 # EXPENSE ENDPOINTS
+# ========================
 
 @app.route('/expenses', methods=['GET'])
 @jwt_required()
 def get_expenses():
     """Get all expenses for authenticated user with pagination."""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         
         page = request.args.get('page', 1, type=int)
         per_page = min(request.args.get('per_page', 10, type=int), 100)
@@ -140,7 +143,7 @@ def get_expenses():
 def create_expense():
     """Create a new expense for authenticated user."""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         data = request.get_json()
         
         if not data or not data.get('title') or data.get('amount') is None:
@@ -187,7 +190,7 @@ def create_expense():
 def get_expense(expense_id):
     """Get a specific expense by ID."""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         expense = Expense.query.get(expense_id)
         
         if not expense or expense.user_id != user_id:
@@ -204,7 +207,7 @@ def get_expense(expense_id):
 def update_expense(expense_id):
     """Update an expense."""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         expense = Expense.query.get(expense_id)
         
         if not expense or expense.user_id != user_id:
@@ -251,7 +254,7 @@ def update_expense(expense_id):
 def delete_expense(expense_id):
     """Delete an expense."""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         expense = Expense.query.get(expense_id)
         
         if not expense or expense.user_id != user_id:
@@ -267,8 +270,9 @@ def delete_expense(expense_id):
         return jsonify({'error': str(e)}), 500
 
 
-
+# ========================
 # ERROR HANDLERS
+# ========================
 
 @app.errorhandler(404)
 def not_found(error):
